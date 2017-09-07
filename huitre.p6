@@ -1,6 +1,7 @@
 #! /usr/bin/env perl6
 
 use v6;
+use LibCurl::Easy;
 
 my constant $no_room_default = 'Pas de salle';
 
@@ -159,18 +160,31 @@ class CelcatActions {
 
 }
 
-# Load file and remove <br>s
-my $source = "sample.xml".IO.slurp;
+sub MAIN($url) {
 
-# Extract data we want from the headers and cut them
-my $
-$source = substr($source, index($source, '<event '));
+    # Load file and remove <br>s
+    unless $url ~~ / 'https://edt.univ-tlse3.fr' [ '/' \w+ ]* '.xml' / {
+        die 'Bad URL.'
+    }
+    my $source = LibCurl::Easy.new(URL => $url).perform.content;
 
-# And output to stdout
-say "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Perl 6 grammar";
+    # Extract the publication date
+    my $footer = substr($source, index($source, '<footer>'), 80);
+    $footer ~~ / (\d+)\/(\d+)\/(\d+) \h (\d+)\:(\d+)\:(\d+) /;
+    my $publication_date = DateTime
+        .new(year => $2.Int, month => $1.Int, day => $0.Int,
+             hour => $3.Int, minute => $4.Int, second => $5.Int,
+             timezone => $*TZ);
 
-my $actions = CelcatActions.new;
-my $celcat = CelcatEventsGrammar.parse($source, :$actions);
+    # Cut this big useless XML part
+    $source = substr($source, index($source, '<event '));
 
-say 'END:VCALENDAR';
+    # And output to stdout
+    say "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Perl 6 grammar";
+
+    my $actions = CelcatActions.new;
+    my $celcat = CelcatEventsGrammar.parse($source, :$actions);
+
+    say 'END:VCALENDAR';
+}
 
