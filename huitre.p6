@@ -15,6 +15,7 @@ class Event {
     has Str $.category is rw = '';
 
     method to_ical_VEVENT {
+        # This is where to tweak if you want a different output !
         my $dtstart = $.date_to_ical_time($.start);
         my $dtend = $.date_to_ical_time($.end);
         join "\n",
@@ -53,9 +54,10 @@ sub date_from_year_and_week($year, $week) {
 }
 
 grammar CelcatEventsGrammar {
-    token TOP           { [ \v || <EVENT> ]* }
+    token TOP           { [ \v || <EVENT> ]* .* }
     token EVENT         { '<event' <text> '>' [ \v || <NODE> ]* '</event>' }
-    token NODE          { <rawweek> || <starttime> || <endtime> || <day> || <category> || <resources> || <notes> || <useless> }
+    token NODE          { <rawweek> || <starttime> || <endtime> || <day> ||
+                          <category> || <resources> || <notes> || <useless> }
 
     token rawweek       { '<rawweeks>' <yesnochain> '</rawweeks>' }
     token yesnochain    { 'N'* 'Y' 'N'* }
@@ -78,11 +80,10 @@ grammar CelcatEventsGrammar {
     token groups        { '<group' <text> '>' [ \v ||  <content> ]* '</group>' }
     token room          { '<room' <text> '>' [ \v ||  <content> ]* '</room>' }
 
-    #token content       { '<item>' .*? '</item>' }
     token content       { '<item>' <text> '</item>' }
-    token useless       { [ '<prettytimes>' .*? '</prettytimes>' ] || '<prettyweeks></prettyweeks>' }
-    token text     { <-[\<\>]>* }
-    token quotedtext    { <-[\"]>* }  #" This comment prevents Gedit highlighter from going wild.
+    token useless       { '<pretty' \w* '>' .*? '</pretty' \w* '>' }
+    token text          { <-[\<\>]>* }
+    token quotedtext    { <-[\"]>* }  #" This comment prevents highlighters from going wild.
 }
 
 
@@ -98,10 +99,6 @@ class CelcatActions {
     has UInt $!end_mm = 0;
 
     method EVENT($/) {
-        # Convert the local 'temp' event into an Event in the list.
-        #say $/.Str;
-        #say "Match !";
-
         $!temp.start = date_from_year_and_week(2017, $!week)
             .later(days => $!day_in_week)
             .later(hours => $!start_hh)
@@ -114,51 +111,40 @@ class CelcatActions {
             .later(minute => $!end_mm)
             .utc;
         
-        #say 'Event date is ', $!temp.start;
-        #say 'Event date is ', $!temp.end;
-
-        #say 'It does the following VEVENT:';
         say $!temp.to_ical_VEVENT;
 
-        # Resen event.
+        # Reset event.
         $!temp = Event.new;
     }
 
     method yesnochain($/) {
         $!week = week_index($/.Str);
-        #say 'Week ', $!week;
     }
 
     method starttime($/) {
         $!start_hh = $/<hour><num>[0].Str.Int;
         $!start_mm = $/<hour><num>[1].Str.Int;
-        #say "Start at $!start_hh h $!start_mm m"
     }
 
     method endtime($/) {
         $!end_hh = $/<hour><num>[0].Str.Int;
         $!end_mm = $/<hour><num>[1].Str.Int;
-        #say "End at $!end_hh h $!end_mm m"
     }
 
     method dayindex($/) {
         $!day_in_week = $/.Str.Int;
-        #say 'Day ', $!day_in_week, ' of week';
     }
 
     method room($/) {
         $!temp.room = $<content>[0]<text>.Str;
-        #say 'Room is ', $!temp.room
     }
 
     method module($/) {
-        $!temp.title = $<content>[0]<text>.Str; # This made my brain explode.
-        #say 'Module is ', $!temp.title
+        $!temp.title = $<content>[0]<text>.Str; # The syntax made my brain explode.
     }
 
     method category($/) {
         $!temp.category = $<text>.Str;
-        #say 'Category is ', $!temp.category;
     }
 
     method groups($/) {
@@ -174,10 +160,14 @@ class CelcatActions {
 }
 
 # Load file and remove <br>s
-my $source = "sample-evonly.xml".IO.slurp;
+my $source = "sample.xml".IO.slurp;
+
+# Extract data we want from the headers and cut them
+my $
+$source = substr($source, index($source, '<event '));
 
 # And output to stdout
-say 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Perl 6 grammar';
+say "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Perl 6 grammar";
 
 my $actions = CelcatActions.new;
 my $celcat = CelcatEventsGrammar.parse($source, :$actions);
