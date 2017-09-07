@@ -1,6 +1,6 @@
 = Huître - A Celcat-ics "compiler"
 
-A Celcat extractor done in Perl 6, 
+A Celcat extractor done in Perl 6.
 
 == Why ?
 
@@ -8,9 +8,15 @@ Because.
 
 It is built to read XML plannings of the Université Paul Sabatier (which doesn't provide .ics by itself...).
 
-It does work on the Computer Graphics planning, I don't know for others. It was mostly a good occasion to learn Perl :)
+It does work on the Computer Graphics planning, I don't know for others. *It was mostly a good occasion to learn Perl :)*.
+By the way, don't be horrified by the code and "architecture", this is a working WIP.
 
 == Requirements
 
-Because I used a custom grammar, the only required package is LibCurl (`zef install LibCurl`).
+Because I used a custom grammar (wich is probably ugly), the only required package is LibCurl (`zef install LibCurl`).
 
+== Performance
+
+Hum....
+
+Seriously, it may be considered fast or very slow. Someone I know addressed the same goal with python, I may compare one day. This program on my planning take a bit less than a second (download + parsing), which I find fair for my personal use, and considering that the planning are updated once a day.
