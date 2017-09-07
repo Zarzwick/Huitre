@@ -1,0 +1,16 @@
+= Huître - A Celcat-ics "compiler"
+
+A Celcat extractor done in Perl 6, 
+
+== Why ?
+
+Because.
+
+It is built to read XML plannings of the Université Paul Sabatier (which doesn't provide .ics by itself...).
+
+It does work on the Computer Graphics planning, I don't know for others. It was mostly a good occasion to learn Perl :)
+
+== Requirements
+
+Because I used a custom grammar, the only required package is LibCurl (`zef install LibCurl`).
+

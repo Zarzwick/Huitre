@@ -7,7 +7,7 @@ my constant $no_room_default = 'Pas de salle';
 
 # Event class
 class Event {
-    has Str $.title is rw = '?';
+    has Str $.title is rw = 'Sans nom';
     has DateTime $.start is rw;
     has DateTime $.end is rw;
     has Str $.room is rw = $no_room_default;
@@ -19,11 +19,12 @@ class Event {
         # This is where to tweak if you want a different output !
         my $dtstart = $.date_to_ical_time($.start);
         my $dtend = $.date_to_ical_time($.end);
+        
         join "\n",
             "BEGIN:VEVENT",
             "DTSTART:$dtstart",
             "DTEND:$dtend",
-            "SUMMARY:$.title",
+            "SUMMARY:$.title ($.category)",
             "CATEGORIES:$.category",
             "LOCATION:$.room",
             "DESCRIPTION:Groupes:\\n$.groups\\nNotes:\\n$.notes",
